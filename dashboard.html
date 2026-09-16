@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yakuza - لوحة التحكم والإدارة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #8b0000;
+            --accent-gold: #d4af37;
+            --dark-bg: #0d0d0d;
+            --card-bg: #151515;
+            --border: #2a2a2a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Tajawal', sans-serif; }
+        body { background-color: var(--dark-bg); color: #fff; padding: 20px; }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary-red);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .role-selector {
+            background: var(--card-bg);
+            border: 1px solid var(--accent-gold);
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .card h2 {
+            color: var(--accent-gold);
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            text-align: right;
+            padding: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th { color: var(--accent-gold); }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .btn-accept { background: #1b5e20; color: #fff; }
+        .btn-reject { background: #b71c1c; color: #fff; }
+        .btn-delete { background: #424242; color: #fff; }
+
+        .btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .log-box {
+            background: #000;
+            border: 1px solid #333;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: #00ff66;
+        }
+
+        .log-item { margin-bottom: 8px; border-bottom: 1px solid #111; padding-bottom: 4px; }
+        .badge {
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+        .badge-boss { background: var(--primary-red); }
+        .badge-coboss { background: #b8860b; }
+        .badge-admin { background: #1e88e5; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>لوحة تحكم الياكوزا 🐉</h1>
+        <div>
+            <label>تبديل الرتبة للتجربة: </label>
+            <select id="roleSelect" class="role-selector" onchange="changeRole()">
+                <option value="Boss">Boss (الزعيم)</option>
+                <option value="Co-Boss">Co-Boss (نائب الزعيم)</option>
+                <option value="Admin">Admin (أدمن)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="grid">
+        <!-- قسم الطلبات -->
+        <div class="card">
+            <h2>طلبات الانضمام المقدمة</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>الاسم</th>
+                        <th>الديسكورد</th>
+                        <th>العمر</th>
+                        <th>الحالة</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody id="appsTable">
+                    <!-- يتم التحميل ديناميكياً -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- قسم السجل والإحصائيات -->
+        <div>
+            <div class="card" style="margin-bottom: 20px;">
+                <h2>الصلاحيات المتاحة لرتبتك (<span id="currentRoleDisplay" class="badge"></span>)</h2>
+                <ul id="permissionsList" style="padding-right: 20px; line-height: 1.8; color: #ccc;">
+                </ul>
+            </div>
+
+            <div class="card">
+                <h2>سجل العمليات (System Logs) 📜</h2>
+                <div class="log-box" id="logContainer">
+                    <!-- سجل التحركات -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentRole = 'Boss';
+
+        // تحميل البيانات أول مرة
+        window.onload = function() {
+            renderDashboard();
+            addLog("تم فتح لوحة التحكم بواسطة " + currentRole);
+        };
+
+        function changeRole() {
+            currentRole = document.getElementById('roleSelect').value;
+            addLog("تم تغيير الرتبة الحالية إلى: " + currentRole);
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            // تحديث عرض الرتبة والصلاحيات
+            const roleDisplay = document.getElementById('currentRoleDisplay');
+            roleDisplay.innerText = currentRole;
+            roleDisplay.className = 'badge badge-' + currentRole.toLowerCase().replace('-', '');
+
+            const permList = document.getElementById('permissionsList');
+            if(currentRole === 'Boss') {
+                permList.innerHTML = "<li>✅ قبول ورفض الطلبات</li><li>✅ حذف الطلبات نهائياً</li><li>✅ صلاحيات الإدارة الكاملة</li>";
+            } else if(currentRole === 'Co-Boss') {
+                permList.innerHTML = "<li>✅ قبول ورفض الطلبات</li><li>❌ لا يمكنه حذف الطلبات</li><li>❌ صلاحيات إدارية محدودة</li>";
+            } else {
+                permList.innerHTML = "<li>❌ مشاهدة الطلبات فقط</li><li>❌ لا يمكنه اتخاذ أي إجراء</li>";
+            }
+
+            // جدول الطلبات
+            const apps = JSON.parse(localStorage.getItem('yakuza_apps')) || [];
+            const tableBody = document.getElementById('appsTable');
+            tableBody.innerHTML = '';
+
+            if(apps.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">لا توجد طلبات مقدمة حالياً.</td></tr>';
+                return;
+            }
+
+            apps.forEach((app, index) => {
+                const tr = document.createElement('tr');
+                
+                // تحديد حالة تعطيل الأزرار حسب الرتبة
+                const canManage = (currentRole === 'Boss' || currentRole === 'Co-Boss');
+                const canDelete = (currentRole === 'Boss');
+
+                tr.innerHTML = `
+                    <td>${app.name}</td>
+                    <td>${app.discord}</td>
+                    <td>${app.age}</td>
+                    <td><strong>${app.status}</strong></td>
+                    <td>
+                        <button class="btn btn-accept" ${!canManage ? 'disabled' : ''} onclick="updateStatus(${index}, 'مقبول ✅')">قبول</button>
+                        <button class="btn btn-reject" ${!canManage ? 'disabled' : ''} onclick="updateStatus(${index}, 'مرفوض ❌')">رفض</button>
+                        <button class="btn btn-delete" ${!canDelete ? 'disabled' : ''} onclick="deleteApp(${index})">حذف</button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function updateStatus(index, newStatus) {
+            let apps = JSON.parse(localStorage.getItem('yakuza_apps')) || [];
+            const oldStatus = apps[index].status;
+            apps[index].status = newStatus;
+            localStorage.setItem('yakuza_apps', JSON.stringify(apps));
+            
+            addLog(`قام [${currentRole}] بتغيير حالة طلب (${apps[index].name}) إلى: ${newStatus}`);
+            renderDashboard();
+        }
+
+        function deleteApp(index) {
+            let apps = JSON.parse(localStorage.getItem('yakuza_apps')) || [];
+            const name = apps[index].name;
+            apps.splice(index, 1);
+            localStorage.setItem('yakuza_apps', JSON.stringify(apps));
+
+            addLog(`قام [${currentRole}] بحذف طلب اللاعب: ${name}`);
+            renderDashboard();
+        }
+
+        function addLog(message) {
+            let logs = JSON.parse(localStorage.getItem('yakuza_logs')) || [];
+            const time = new Date().toLocaleTimeString('ar-EG');
+            const logEntry = `[${time}] ${message}`;
+            logs.unshift(logEntry);
+            localStorage.setItem('yakuza_logs', JSON.stringify(logs));
+
+            const logContainer = document.getElementById('logContainer');
+            logContainer.innerHTML = logs.map(l => `<div class="log-item">${l}</div>`).join('');
+        }
+    </script>
+</body>
+</html>

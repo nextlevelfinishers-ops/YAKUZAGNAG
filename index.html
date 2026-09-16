@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yakuza Clan - بوابة العصابة ولوحة التحكم</title>
+    <link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@700&family=Tajawal:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #8b0000;
+            --accent-gold: #d4af37;
+            --dark-bg: #0a0a0a;
+            --panel-bg: rgba(15, 15, 15, 0.9);
+            --card-bg: #141414;
+            --border-color: #2a2a2a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Tajawal', sans-serif; }
+
+        body {
+            background-color: var(--dark-bg);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* خلفية التنين الأبيض والستايل الياباني */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: url('https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1920&auto=format&fit=crop') no-repeat center center/cover;
+            filter: grayscale(100%) brightness(0.25) contrast(1.2);
+            z-index: -2;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(139, 0, 0, 0.2) 0%, rgba(10, 10, 10, 0.9) 85%);
+            z-index: -1;
+        }
+
+        /* شريط التنقل العلوي */
+        .navbar {
+            max-width: 1100px;
+            margin: 0 auto 25px auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel-bg);
+            padding: 15px 25px;
+            border: 1px solid var(--primary-red);
+            border-radius: 8px;
+            box-shadow: 0 0 15px rgba(139, 0, 0, 0.4);
+        }
+
+        .nav-tabs button {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: #ccc;
+            padding: 8px 18px;
+            margin-left: 10px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .nav-tabs button.active, .nav-tabs button:hover {
+            background: var(--primary-red);
+            color: #fff;
+            border-color: var(--accent-gold);
+        }
+
+        .user-card { display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--accent-gold); }
+        .btn-discord { background: #5865F2; color: #fff; padding: 8px 16px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 0.9rem; }
+
+        /* الأقسام الصفحات */
+        .page-section { display: none; max-width: 1100px; margin: 0 auto; }
+        .page-section.active { display: block; }
+
+        /* صفحة التقديم */
+        .apply-container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: var(--panel-bg);
+            border: 2px solid var(--primary-red);
+            border-radius: 8px;
+            padding: 35px;
+            box-shadow: 0 0 25px rgba(139, 0, 0, 0.5);
+            backdrop-filter: blur(8px);
+        }
+
+        .header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid var(--primary-red); padding-bottom: 12px; }
+        .header h1 { font-family: 'Aref Ruqaa', serif; font-size: 2.6rem; text-shadow: 2px 2px 8px #8b0000; }
+        
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; margin-bottom: 8px; color: var(--accent-gold); font-weight: bold; }
+        .form-group input, .form-group textarea {
+            width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.7);
+            border: 1px solid var(--border-color); color: #fff; border-radius: 4px;
+        }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: var(--primary-red); }
+
+        .btn-submit {
+            width: 100%; padding: 14px; background: linear-gradient(45deg, #8b0000, #4a0000);
+            border: 1px solid var(--accent-gold); color: #fff; font-size: 1.1rem; font-weight: bold;
+            cursor: pointer; border-radius: 4px; transition: 0.3s;
+        }
+        .btn-submit:hover { background: linear-gradient(45deg, #a70000, #660000); }
+
+        /* لوحة التحكم */
+        .grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+        .card { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; }
+        .card h2 { color: var(--accent-gold); margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+
+        table { width: 100%; border-collapse: collapse; }
+        th, td { text-align: right; padding: 12px; border-bottom: 1px solid var(--border-color); }
+        th { color: var(--accent-gold); }
+
+        .btn { padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 5px; }
+        .btn-accept { background: #1b5e20; color: #fff; }
+        .btn-reject { background: #b71c1c; color: #fff; }
+        .btn-delete { background: #424242; color: #fff; }
+        .btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .log-box { background: #000; border: 1px solid #333; padding: 10px; height: 350px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; color: #00ff66; }
+        .log-item { margin-bottom: 8px; border-bottom: 1px solid #111; padding-bottom: 4px; }
+        .badge { padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; }
+        .badge-boss { background: var(--primary-red); }
+        .badge-coboss { background: #b8860b; }
+        .badge-admin { background: #1e88e5; }
+    </style>
+</head>
+<body>
+
+    <!-- شريط العناوين والتنقل -->
+    <div class="navbar">
+        <div class="nav-tabs">
+            <button id="tabApply" class="active" onclick="switchTab('apply')">تقديم طلب ⚔️</button>
+            <button id="tabDashboard" onclick="switchTab('dashboard')">لوحة التحكم 🐉</button>
+        </div>
+        <div id="authSection">
+            <!-- يُزرع فيه زر الديسكورد أو صورة الحساب -->
+        </div>
+    </div>
+
+    <!-- 1. صفحة التقديم -->
+    <div id="sectionApply" class="page-section active">
+        <div class="apply-container">
+            <div class="header">
+                <h1>عصابة الياكوزا - YAKUZA</h1>
+                <p>طلب الانضمام إلى العائلة - 極道</p>
+            </div>
+            <form id="applyForm">
+                <div class="form-group">
+                    <label>الاسم داخل السيرفر</label>
+                    <input type="text" id="playerName" required placeholder="مثال: Kenji Sato">
+                </div>
+                <div class="form-group">
+                    <label>حساب الديسكورد (Username)</label>
+                    <input type="text" id="discordTag" required placeholder="مثال: user_name">
+                </div>
+                <div class="form-group">
+                    <label>العمر الحقيقي</label>
+                    <input type="number" id="age" required min="15">
+                </div>
+                <div class="form-group">
+                    <label>سبب الانضمام لليابانيين</label>
+                    <textarea id="reason" rows="3" required></textarea>
+                </div>
+                <button type="submit" class="btn-submit">تقديم الطلب ⚔️</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. لوحة التحكم -->
+    <div id="sectionDashboard" class="page-section">
+        <div class="grid">
+            <div class="card">
+                <h2>إدارة طلبات الانضمام</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الديسكورد</th>
+                            <th>العمر</th>
+                            <th>الحالة</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="appsTable"></tbody>
+                </table>
+            </div>
+
+            <div>
+                <div class="card" style="margin-bottom: 20px;">
+                    <h2>الرتبة والصلاحيات (<span id="roleDisplay" class="badge">Guest</span>)</h2>
+                    <ul id="permList" style="padding-right: 20px; line-height: 1.8; color: #ccc; font-size: 0.9rem;">
+                        <li>قم بتسجيل الدخول عبر الديسكورد لعرض الصلاحيات.</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h2>سجل العمليات (Discord Logs) 📜</h2>
+                    <div class="log-box" id="logContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. إعدادات الـ Discord والمعرفات الثابتة
+        // ==========================================
+        // 1. ضع هنا الـ Client ID الذي نسخته من صفحة OAuth2
+const DISCORD_CLIENT_ID = "1549910092479205448";
+
+// 2. رابط الـ Webhook الخاص بقناة اللوجات في سيرفرك
+const DISCORD_WEBHOOK_URL = "https://discordapp.com/api/webhooks/1549912168374476940/6Y90JPSAQvpVbVz7x75u9Mnrgb8gn_Y1YnTo7lJ5Q3wfKDIumFok3Trzjh2SL32o1tOY";
+
+// 3. رابط الموقع المباشر لتوجيه تسجيل الدخول
+const REDIRECT_URI = "https://nextlevelfinishers-ops.github.io/YAKUZA.GNAG/";
+
+// 4. معرف الديسكورد (Discord ID) للرئيس/الأدمن
+const BOSS_IDS = [
+    "1198084664947122176"
+];
+
+// 5. معرفات الديسكورد للنائبين (Co-Boss)
+const COBOSS_IDS = [
+    "1387525708917641378",
+    "1449113159599259672"
+];
+
+        // ==========================================
+        // 2. إدارة التبويب والصفحات
+        // ==========================================
+        function switchTab(tab) {
+            document.getElementById('sectionApply').classList.remove('active');
+            document.getElementById('sectionDashboard').classList.remove('active');
+            document.getElementById('tabApply').classList.remove('active');
+            document.getElementById('tabDashboard').classList.remove('active');
+
+            if(tab === 'apply') {
+                document.getElementById('sectionApply').classList.add('active');
+                document.getElementById('tabApply').classList.add('active');
+            } else {
+                document.getElementById('sectionDashboard').classList.add('active');
+                document.getElementById('tabDashboard').classList.add('active');
+                renderDashboard();
+            }
+        }
+
+        // ==========================================
+        // 3. تسجيل الدخول والتحقق من الشخصية
+        // ==========================================
+        window.onload = function() {
+            checkDiscordAuth();
+            renderDashboard();
+        };
+
+        function checkDiscordAuth() {
+            const fragment = new URLSearchParams(window.location.hash.slice(1));
+            const accessToken = fragment.get('access_token');
+
+            if (accessToken) {
+                fetch('https://discord.com/api/users/@me', {
+                    headers: { authorization: `Bearer ${accessToken}` }
+                })
+                .then(res => res.json())
+                .then(user => {
+                    currentUser = user;
+                    
+                    // التعرف التلقائي على الرتبة المحددة
+                    if(BOSS_IDS.includes(user.id)) currentUser.role = 'Boss';
+                    else if(COBOSS_IDS.includes(user.id)) currentUser.role = 'Co-Boss';
+                    else currentUser.role = 'Admin';
+
+                    updateUserUI();
+                    sendLogToDiscord("🔑 تسجيل دخول للوحة التحكم", [
+                        { name: "المستخدم", value: `${user.username} (${user.id})`, inline: true },
+                        { name: "الرتبة", value: currentUser.role, inline: true }
+                    ], 65280);
+                });
+            } else {
+                showLoginButton();
+            }
+        }
+
+        function showLoginButton() {
+            const authUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&response_type=token&scope=identify`;
+            document.getElementById('authSection').innerHTML = `<a href="${authUrl}" class="btn-discord">تسجيل الدخول عبر Discord 💬</a>`;
+        }
+
+        function updateUserUI() {
+            const avatar = currentUser.avatar 
+                ? `https://cdn.discordapp.com/avatars/${currentUser.id}/${currentUser.avatar}.png` 
+                : 'https://cdn.discordapp.com/embed/avatars/0.png';
+
+            document.getElementById('authSection').innerHTML = `
+                <div class="user-card">
+                    <img src="${avatar}" class="user-avatar">
+                    <div>
+                        <strong>${currentUser.username}</strong>
+                        <span class="badge badge-${currentUser.role.toLowerCase().replace('-','')}">${currentUser.role}</span>
+                    </div>
+                </div>
+            `;
+            renderDashboard();
+        }
+
+        // ==========================================
+        // 4. تقديم الطلب + إرسال Log للـ Webhook
+        // ==========================================
+        document.getElementById('applyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const application = {
+                id: Date.now(),
+                name: document.getElementById('playerName').value,
+                discord: document.getElementById('discordTag').value,
+                age: document.getElementById('age').value,
+                reason: document.getElementById('reason').value,
+                status: 'قيد المراجعة ⏳',
+                date: new Date().toLocaleDateString('ar-EG')
+            };
+
+            let apps = JSON.parse(localStorage.getItem('yakuza_apps')) || [];
+            apps.push(application);
+            localStorage.setItem('yakuza_apps', JSON.stringify(apps));
+
+            sendLogToDiscord("📝 طلب انضمام جديد!", [
+                { name: "الاسم", value: application.name, inline: true },
+                { name: "الديسكورد", value: application.discord, inline: true },
+                { name: "العمر", value: application.age, inline: true },
+                { name: "السبب", value: application.reason }
+            ], 3447003);
+
+            alert('تم إرسال طلبك بنجاح وسُجل في الـ Webhook!');
+            this.reset();
+        });
+
+        // ==========================================
+        // 5. إدارة اللوحة والصلاحيات
+        // ==========================================
+        function renderDashboard() {
+            const apps = JSON.parse(localStorage.getItem('yakuza_apps')) || [];
+            const tableBody = document.getElementById('appsTable');
+            tableBody.innerHTML = '';
+
+            const currentRole = currentUser ? currentUser.role : 'Guest';
+            const roleDisplay = document.getElementById('roleDisplay');
+            roleDisplay.innerText = currentRole;
+            roleDisplay.className = 'badge badge-' + currentRole.toLowerCase().replace('-','');
+
+            // قائمة الصلاحيات
+            const permList = document.getElementById('permList');
+            if(currentRole === 'Boss') {
+                permList.innerHTML = "<li>✅ قبول ورفض الطلبات</li><li>✅ حذف الطلبات نهائياً</li><li>✅ كامل صلاحيات الإدارة العليا</li>";
+            } else if(currentRole === 'Co-Boss') {
+                permList.innerHTML = "<li>✅ قبول ورفض الطلبات</li><li>❌ لا يمكن حذف الطلبات</li><li>✅ صلاحيات النائب الرسمية</li>";
+            } else if(currentRole === 'Admin') {
+                permList.innerHTML = "<li>❌ مشاهدة الطلبات فقط</li><li>❌ لا توجد صلاحيات اتخاذ القرار</li>";
+            }
+
+            if(apps.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" style="text-align:center;">لا توجد طلبات حالياً.</td></tr>';
+            } else {
+                apps.forEach((app, index) => {
+                    const tr = document.createElement('tr');
+                    const canManage = (currentRole === 'Boss' || currentRole === 'Co-Boss');
+                    const canDelete = (currentRole === 'Boss');
+
+                    tr.innerHTML = `
+                        <td>${app.name}</td>
+                        <td>${app.discord}</td>
+                        <td>${app.age}</td>
+                        <td><strong>${app.status}</strong></td>
+                        <td>
+                            <button class="btn btn-accept" ${!canManage ? 'disabled' : ''} onclick="updateStatus(${index}, 'مقبول ✅')">قبول</button>
+                            <button class="btn btn-reject" ${!canManage ? 'disabled' : ''} onclick="updateStatus(${index}, 'مرفوض ❌')">رفض</button>
+                            <button class="btn btn-delete" ${!canDelete ? 'disabled' : ''} onclick="deleteApp(${index})">حذف</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(tr);
+                });
+            }
+
+            loadLocalLogs();
+        }
+
+        function updateStatus(index, newStatus) {
+            let apps = JSON.parse(localStorage.getItem('yakuza_apps')) || [];
+            apps[index].status = newStatus;
+            localStorage.setItem('yakuza_apps', JSON.stringify(apps));
+
+            const logMsg = `قام [${currentUser.username}] (${currentUser.role}) بتغيير حالة طلب [${apps[index].name}] إلى: ${newStatus}`;
+            
+            sendLogToDiscord("⚖️ تحديث حالة طلب", [
+                { name: "المشرف", value: `${currentUser.username} (${currentUser.role})`, inline: true },
+                { name: "اللاعب", value: apps[index].name, inline: true },
+                { name: "الحالة الجديدة", value: newStatus, inline: true }
+            ], newStatus.includes('مقبول') ? 3066993 : 15158332);
+
+            saveLocalLog(logMsg);
+            renderDashboard();
+        }
+
+        function deleteApp(index) {
+            let apps = JSON.parse(localStorage.getItem('yakuza_apps')) || [];
+            const name = apps[index].name;
+            apps.splice(index, 1);
+            localStorage.setItem('yakuza_apps', JSON.stringify(apps));
+
+            const logMsg = `قام الزعيم [${currentUser.username}] بحذف طلب اللاعب: ${name}`;
+            
+            sendLogToDiscord("🗑️ حذف طلب", [
+                { name: "المشرف", value: currentUser.username, inline: true },
+                { name: "اللاعب المحذوف", value: name, inline: true }
+            ], 10038562);
+
+            saveLocalLog(logMsg);
+            renderDashboard();
+        }
+
+        // ==========================================
+        // 6. التعامل مع Discord Webhook واللوجات
+        // ==========================================
+        function sendLogToDiscord(title, fields, color) {
+            if(!DISCORD_WEBHOOK_URL || DISCORD_WEBHOOK_URL.includes("ضع_رابط")) return;
+
+            fetch(DISCORD_WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    embeds: [{
+                        title: title,
+                        color: color || 9109504,
+                        fields: fields,
+                        timestamp: new Date().toISOString(),
+                        footer: { text: "Yakuza Control Center 🐉" }
+                    }]
+                })
+            });
+        }
+
+        function saveLocalLog(msg) {
+            let logs = JSON.parse(localStorage.getItem('yakuza_logs')) || [];
+            logs.unshift(`[${new Date().toLocaleTimeString('ar-EG')}] ${msg}`);
+            localStorage.setItem('yakuza_logs', JSON.stringify(logs));
+        }
+
+        function loadLocalLogs() {
+            let logs = JSON.parse(localStorage.getItem('yakuza_logs')) || [];
+            document.getElementById('logContainer').innerHTML = logs.map(l => `<div class="log-item">${l}</div>`).join('');
+        }
+    </script>
+</body>
+</html>
